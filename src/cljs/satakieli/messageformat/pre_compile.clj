@@ -1,5 +1,6 @@
 (ns satakieli.messageformat.pre-compile
-  (:require [clojure.java.shell :as sh]))
+  (:require [clojure.java.shell :as sh]
+            [clojure.string :as string]))
 
 (defn- wrap-closure [code]
   (str "(function() { var exports = exports || {};"
@@ -8,7 +9,9 @@
 
 (defn- exec-messageformat [dir]
   (let [{:keys [exit out err] :as result}
-        (sh/sh "./node_modules/.bin/messageformat" "-n" "exports" "--enable-intl-support" "true" dir)]
+        (if (string/includes? (System/getProperty "os.name") "Windows")
+          (sh/sh "./node_modules/.bin/messageformat.cmd" "-n" "exports" "--enable-intl-support" "true" dir)
+          (sh/sh "./node_modules/.bin/messageformat" "-n" "exports" "--enable-intl-support" "true" dir))]
     (if (= exit 0)
       out
       (throw (ex-info "Could not compile formats" result)))))
